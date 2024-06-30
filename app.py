@@ -29,12 +29,25 @@ import joblib,os
 import pandas as pd
 
 # Vectorizer
-news_vectorizer = open("resources/tfidfvect.pkl","rb")
+news_vectorizer = open("NewData/tfidfvect.pkl","rb")
 tweet_cv = joblib.load(news_vectorizer) # loading your vectorizer from the pkl file
 
 # Load your raw data
-raw = pd.read_csv("resources/train.csv")
+raw = pd.read_csv("train.csv")
 
+def clean(text):
+    text = str(text).lower()
+    text = re.sub('\[.*?\]', '', text)
+    text = re.sub('https?://\S+|www\.\S+', '', text)
+    text = re.sub('<.*?>+', '', text)
+    text = re.sub('[%s]' % re.escape(string.punctuation), '', text)
+    text = re.sub('\n', '', text)
+    text = re.sub('\w*\d\w*', '', text)
+    text = [word for word in text.split(' ') if word not in stopword]
+    text=" ".join(text)
+    text = [stemmer.stem(word) for word in text.split(' ')]
+    text=" ".join(text)
+    return text
 # The main function where we will build the actual app
 def main():
 	"""Tweet Classifier App with Streamlit """
@@ -64,20 +77,20 @@ def main():
 		st.info("Prediction with ML Models")
 		# Creating a text box for user input
 		tweet_text = st.text_area("Enter Text","Type Here")
-
+        tweet_text = clean(tweet_text)
 		if st.button("Classify"):
 			# Transforming user input with vectorizer
 			vect_text = tweet_cv.transform([tweet_text]).toarray()
 			# Load your .pkl file with the model of your choice + make predictions
 			# Try loading in multiple models to give the user a choice
-			predictor = joblib.load(open(os.path.join("resources/Logistic_regression.pkl"),"rb"))
+			predictor = joblib.load(open(os.path.join("NewData/LogReg.pkl"),"rb"))
 			prediction = predictor.predict(vect_text)
 
 			# When model has successfully run, will print prediction
 			# You can use a dictionary or similar structure to make this output
-			# more human interpretable.
+			# more human interpretable7.
 			st.success("Text Categorized as: {}".format(prediction))
-
+77
 # Required to let Streamlit instantiate our web app.  
 if __name__ == '__main__':
 	main()
